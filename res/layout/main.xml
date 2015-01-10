@@ -5,43 +5,44 @@
     android:layout_height="fill_parent"
     >
 
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="test1"
-    />
+<TextView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="연결상태" />
+
 <TextView  
     android:id="@+id/myTest1"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     />
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="test2"
-    />
+
+<TextView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="아이디" />
+
 <TextView  
     android:id="@+id/myTest2"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     />
 
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="test3"
-    />
+<TextView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="이동값" />
+
 <TextView  
     android:id="@+id/myTest3"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     />
 
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="test4"
-    />
+<TextView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="상태" />
+
 <TextView  
     android:id="@+id/myTest4"
     android:layout_width="fill_parent" 
@@ -51,14 +52,14 @@
 <TextView
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:text="아이디"
-    android:textSize="20sp" />
+    android:text="1"
+    android:textSize="14sp" />
 
 <TextView
     android:id="@+id/myTest5"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:textSize="20sp" />
+    android:textSize="14sp" />
 
 <LinearLayout
     android:layout_width="match_parent"
@@ -68,14 +69,14 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="상태"
-        android:textSize="20sp" />
+        android:text="2"
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/myTest6"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textSize="20sp" />
+        android:textSize="14sp" />
 
     <EditText
         android:id="@+id/editText1"
