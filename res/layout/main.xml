@@ -7,93 +7,58 @@
 <TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
-    android:text="가속도"
+    android:text="test1"
     />
 <TextView  
-    android:id="@+id/acc"
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    />
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="방향"
-    />
-<TextView  
-    android:id="@+id/ori"
+    android:id="@+id/myTest1"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     />
 <TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
-    android:text="회전"
+    android:text="test2"
     />
 <TextView  
-    android:id="@+id/rot"
+    android:id="@+id/myTest2"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     />
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="밝기"
-    />
-<TextView  
-    android:id="@+id/lig"
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    />
+
 <TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
-    android:text="자력"
+    android:text="test3"
     />
 <TextView  
-    android:id="@+id/mag"
+    android:id="@+id/myTest3"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     />
+
 <TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
-    android:text="압력"
+    android:text="test4"
     />
 <TextView  
-    android:id="@+id/pre"
+    android:id="@+id/myTest4"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     />
- <TextView  
+
+<TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
-    android:text="근접"
+    android:text="test5"
     />
- <TextView  
-    android:id="@+id/prox"
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    />
- <TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="온도"
-    />
- <TextView  
-    android:id="@+id/temp"
+<TextView  
+    android:id="@+id/myTest5"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     />
- <TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="최대 가속도"
-    />
-  <TextView  
-    android:id="@+id/maxAcc"
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    />
+
+
   
   <Button
         android:id="@+id/btn_connect"

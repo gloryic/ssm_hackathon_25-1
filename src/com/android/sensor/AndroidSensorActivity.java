@@ -10,11 +10,13 @@ import io.socket.IOCallback;
 import io.socket.SocketIO;
 import io.socket.SocketIOException;
 import android.app.Activity;
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -27,27 +29,45 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 	SensorManager sm;
 	SensorEventListener accL;
 	SensorEventListener oriL;
-	SensorEventListener ligL;
-	SensorEventListener magL;
-	SensorEventListener preL;
-	SensorEventListener proxL;
-	SensorEventListener tempL;
+
 	
 	Sensor oriSensor; // 방향
 	Sensor accSensor; // 가속도
 	Sensor rotSensor; // 회전
-	Sensor ligSensor; // 밝기
-	Sensor magSensor; // 자기
-	Sensor preSensor; // 압력
-	Sensor proxSensor; // 근접
-	Sensor tempSensor; // 온도
+
 	
 	float maxAccX;
 	float maxAccY;
 	float maxAccZ;
 	
-	TextView ori, acc, rot, lig, mag, pre, prox, temp;
-	TextView maxAcc;
+	private long lastTime;
+	private long lastShakingTime;
+	private float speed;
+	private float lastX;
+	private float lastY;
+	private float lastZ;
+	private float x, y, z;
+	private static final int SHAKE_THRESHOLD = 800;
+	private int shackeCnt = 0;;
+	Vibrator vibe;
+	
+
+	private static final int CMD_NON = 0;
+	private static final int CMD_LEFT = 1;
+	private static final int CMD_RIGHT = 2;
+	private static final int CMD_GO = 3;
+	private static final int CMD_BACK = 4;
+	private int curCMD = CMD_NON;
+	private int nextCMD = CMD_NON;
+	private boolean isShaking = false;
+	
+	private long lastCmdActTime = 0;
+	
+	TextView testT1;
+	TextView testT2;
+	TextView testT3;
+	TextView testT4;	
+	TextView testT5;	
 	
     private Button btn_Connect;
     SocketIO socket;
@@ -74,21 +94,13 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
         oriSensor = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION); // 방향
         accSensor = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER); // 가속도
         rotSensor = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE); // 회전
-        ligSensor = sm.getDefaultSensor(Sensor.TYPE_LIGHT); // 밝기
-        magSensor = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD); // 자력
-        preSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE); // 압력
-        proxSensor = sm.getDefaultSensor(Sensor.TYPE_PROXIMITY); // 근접
-        tempSensor = sm.getDefaultSensor(Sensor.TYPE_TEMPERATURE); // 온도
-        
-        ori = (TextView)findViewById(R.id.ori);
-        acc = (TextView)findViewById(R.id.acc);
-        rot = (TextView)findViewById(R.id.rot);
-        lig = (TextView)findViewById(R.id.lig);
-        mag = (TextView)findViewById(R.id.mag);
-        pre = (TextView)findViewById(R.id.pre);
-        prox = (TextView)findViewById(R.id.prox);
-        temp = (TextView)findViewById(R.id.temp);
-        maxAcc = (TextView)findViewById(R.id.maxAcc);
+
+        testT1 = (TextView)findViewById(R.id.myTest1);
+        testT2 = (TextView)findViewById(R.id.myTest2);
+        testT3 = (TextView)findViewById(R.id.myTest3);
+        testT4 = (TextView)findViewById(R.id.myTest4);
+        testT5 = (TextView)findViewById(R.id.myTest5);
+        vibe = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         maxAccX = -10;
         maxAccY = -10;
@@ -103,12 +115,7 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 		sm.registerListener(this, accSensor, SensorManager.SENSOR_DELAY_NORMAL); // 가속도
 		sm.registerListener(this, oriSensor, SensorManager.SENSOR_DELAY_NORMAL); // 방향
 		sm.registerListener(this, rotSensor, SensorManager.SENSOR_DELAY_NORMAL); // 회전
-		sm.registerListener(this, ligSensor, SensorManager.SENSOR_DELAY_NORMAL); // 밝기
-		sm.registerListener(this, magSensor, SensorManager.SENSOR_DELAY_NORMAL); // 자력
-		sm.registerListener(this, preSensor, SensorManager.SENSOR_DELAY_NORMAL); // 압력
-		sm.registerListener(this, proxSensor, SensorManager.SENSOR_DELAY_NORMAL); // 근접
-		sm.registerListener(this, tempSensor, SensorManager.SENSOR_DELAY_NORMAL); // 온도
-		
+
 	}
 	
 	
@@ -126,7 +133,9 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 		// TODO Auto-generated method stub
 		
 	}
-
+	public void sendCMD(String msg,int cmd) {
+		
+	}
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		// TODO Auto-generated method stub
@@ -134,12 +143,11 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 			float var0 = event.values[0];
 			float var1 = event.values[1];
 			float var2 = event.values[2];
-	       // Log.i("aa","a");
+			
+			long currentTime = System.currentTimeMillis();
 			switch (event.sensor.getType()) {
 			case Sensor.TYPE_ACCELEROMETER:
-				
-				acc.setText("x = " + var0 + ", y = " + var1 +" , z = " + var2);
-				
+
 				if(maxAccX < var0)
 					maxAccX = var0;
 				if(maxAccY < var1)
@@ -147,52 +155,102 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 				if(maxAccZ < var2)
 					maxAccZ = var2;
 				
-				maxAcc.setText("X : " + maxAccX + ", Y : " + maxAccY + ", Z : " + maxAccZ);
+
 				
+	            long gabOfTime = (currentTime - lastTime);
+	            if (gabOfTime > 100) {
+	                lastTime = currentTime;
+	                x = var0;
+	                y = var1;
+	                z = var2;
+	 
+	                speed = Math.abs(x + y + z - lastX - lastY - lastZ) / gabOfTime * 10000;
+	 
+	                if (speed > SHAKE_THRESHOLD || ( isShaking && speed > SHAKE_THRESHOLD-300)) {
+	                	lastShakingTime = currentTime;
+	                	isShaking = true;
+	                	shackeCnt++;
+	                	testT3.setText("shaking [" + shackeCnt +"]" );
+	                }
+	                
+	                
+	                
+	                lastX = var0;
+	                lastY = var1;
+	                lastZ = var2;
+	            }
+	            
+	            if((currentTime - lastShakingTime )>1000){
+	            	shackeCnt = 0;
+	            	isShaking = false;
+	          
+	            	testT3.setText("Not shaking " );
+	            
+	            }
+	            if(shackeCnt>2){
+	            	//vibe.vibrate(200);
+	            }
 				
 				break;
 
 			case Sensor.TYPE_ORIENTATION:
 				
-				ori.setText("x = " + var0 + ", y = " + var1 +" , z = " + var2);
+				if(var2 >=25.0){
+					testT1.setText("좌로간다");
+					nextCMD = CMD_LEFT;
+
+				}else if(var2 <= -25.0){
+					testT1.setText("우로간다");
+					nextCMD = CMD_RIGHT;
+
+				}else if(var1 >= -50.0){
+					testT2.setText("앞으로간다");
+					nextCMD = CMD_GO;
+
+				}else if(var1<= -100.0){
+					
+					testT2.setText("뒤로간다");
+					nextCMD = CMD_BACK;
+
+				}else{
+					nextCMD = CMD_NON;
+					testT1.setText("---");
+
+					testT2.setText("---");
+				}
 				
 				break;
 			case Sensor.TYPE_GYROSCOPE:
-				
-				rot.setText("x = " + var0 + ", y = " + var1 +" , z = " + var2);
-				
-				break;
-			case Sensor.TYPE_LIGHT:
-				
-				lig.setText("x = " + var0 + ", y = " + var1 +" , z = " + var2);
-				
-				break;
-			case Sensor.TYPE_MAGNETIC_FIELD:
-				
-				mag.setText("x = " + var0 + ", y = " + var1 +" , z = " + var2);
-				
-				break;
-			case Sensor.TYPE_PRESSURE:
-				
-				pre.setText("x = " + var0 + ", y = " + var1 +" , z = " + var2);
-	
-				break;
-			case Sensor.TYPE_PROXIMITY:
-	
-				prox.setText("x = " + var0 + ", y = " + var1 +" , z = " + var2);
-	
-				break;
-			case Sensor.TYPE_TEMPERATURE:
-	
-				temp.setText("x = " + var0 + ", y = " + var1 +" , z = " + var2);
 	
 				break;
 			
 			}
-			                          
+			long gapCMDTime = currentTime - lastCmdActTime ;
+			if(isShaking){
+				sendCMD("test",1);
+				//vibe.vibrate(100);
+				testT4.setText("[SSSSHAAAKKIIINNG]");
+			}else if(curCMD!=nextCMD){
+				
+				curCMD = nextCMD;
+				lastCmdActTime = currentTime;
+				if(curCMD !=CMD_NON ){
+					vibe.vibrate(100);
+					sendCMD("test",1);	
+				}
+				testT4.setText("1[" + curCMD +"]");
+			}else if(gapCMDTime>=400 && lastCmdActTime != 0 ){
+				lastCmdActTime = currentTime;
+				if(curCMD !=CMD_NON ){
+					vibe.vibrate(100);
+					sendCMD("test",1);	
+				}
+				testT4.setText("[" + curCMD +"]");
+			}
 			                          
 		}
 	}
+
 
 
 	@Override
