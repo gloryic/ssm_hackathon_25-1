@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 public class AndroidSensorActivity extends Activity implements IOCallback, SensorEventListener, OnClickListener{
@@ -57,9 +58,14 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 	private static final int CMD_RIGHT = 2;
 	private static final int CMD_GO = 3;
 	private static final int CMD_BACK = 4;
+	private static final int CMD_SHAKE = 5;
 	private int curCMD = CMD_NON;
 	private int nextCMD = CMD_NON;
 	private boolean isShaking = false;
+	private boolean gameStart = false;
+	
+	private String userid = "";
+	
 	
 	private long lastCmdActTime = 0;
 	
@@ -70,6 +76,11 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 	TextView testT5;	
 	
     private Button btn_Connect;
+    private Button btn_id;
+    
+    private Button btn_start;
+    private EditText et;
+   
     SocketIO socket;
     
     @Override
@@ -85,10 +96,16 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		et = (EditText)findViewById(R.id.editText1);
 		btn_Connect = (Button)findViewById(R.id.btn_connect);
 		btn_Connect.setOnClickListener(this);
+		btn_id = (Button)findViewById(R.id.idButton);
+		btn_id.setOnClickListener(this);
+		btn_start = (Button)findViewById(R.id.btn_start);
+		btn_start.setOnClickListener(this);
 		
+		btn_start.setEnabled(false);
+
         sm = (SensorManager)getSystemService(SENSOR_SERVICE); 
         
         oriSensor = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION); // 방향
@@ -135,6 +152,13 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 	}
 	public void sendCMD(String msg,int cmd) {
 		
+		try {
+			
+			socket.emit("fromclient", new JSONObject().put("msg", msg + "[" +cmd + "]"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 	}
 	@Override
 	public void onSensorChanged(SensorEvent event) {
@@ -226,28 +250,30 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 			
 			}
 			long gapCMDTime = currentTime - lastCmdActTime ;
-			if(isShaking){
-				sendCMD("test",1);
-				//vibe.vibrate(100);
-				testT4.setText("[SSSSHAAAKKIIINNG]");
-			}else if(curCMD!=nextCMD){
-				
-				curCMD = nextCMD;
-				lastCmdActTime = currentTime;
-				if(curCMD !=CMD_NON ){
-					vibe.vibrate(100);
-					sendCMD("test",1);	
+			if(gameStart){
+				if(isShaking){
+					sendCMD("test",CMD_SHAKE);
+					//vibe.vibrate(100);
+					testT4.setText("[SSSSHAAAKKIIINNG]");
+				}else if(curCMD!=nextCMD){
+
+					curCMD = nextCMD;
+					lastCmdActTime = currentTime;
+					if(curCMD !=CMD_NON ){
+						vibe.vibrate(100);
+						sendCMD("test",curCMD);	
+					}
+					testT4.setText("1[" + curCMD +"]");
+				}else if(gapCMDTime>=400 && lastCmdActTime != 0 ){
+					lastCmdActTime = currentTime;
+					if(curCMD !=CMD_NON ){
+						vibe.vibrate(100);
+						sendCMD("test",curCMD);	
+					}
+					testT4.setText("[" + curCMD +"]");
 				}
-				testT4.setText("1[" + curCMD +"]");
-			}else if(gapCMDTime>=400 && lastCmdActTime != 0 ){
-				lastCmdActTime = currentTime;
-				if(curCMD !=CMD_NON ){
-					vibe.vibrate(100);
-					sendCMD("test",1);	
-				}
-				testT4.setText("[" + curCMD +"]");
 			}
-			                          
+
 		}
 	}
 
@@ -270,12 +296,39 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 				// Emits an event to the server.
 				//socket.emit("event", "argument1", "argument2", 13.37);
 				
-				socket.emit("fromclient", new JSONObject().put("msg", "test"));
-				  
+				//socket.emit("fromclient", new JSONObject().put("msg", "test"));
+				//btn_id.setEnabled(true);
+				//btn_id.setFocusable(true);
+	
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}else if(getId==R.id.idButton){
+			
+			
+			try {
+
+				
+				this.userid = "id : "+ et.getText().toString();
+				
+
+				socket.emit("fromclient", new JSONObject().put("msg",  userid ));
+				
+		
+
+	
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			
+		}else if(getId==R.id.btn_start){
+			
+			gameStart = true;
+
 		}
+		
+
 	}
 	
 	@Override
@@ -291,6 +344,33 @@ public class AndroidSensorActivity extends Activity implements IOCallback, Senso
 	//서버에서 emit하면 callback
 	public void on(String event, IOAcknowledge ack, Object... args) {
 		System.out.println("Server triggered event '" + event + "'");
+		JSONObject recvjson = (JSONObject)args[0];
+
+		Log.i("recv  ", recvjson.toString());
+		
+		
+		try {
+			Log.i("de 1 ", recvjson.getString("msg"));
+			Log.i("de 2 ", this.userid);
+			if(recvjson.getString("msg").compareTo(this.userid) ==0 ){
+				btn_start.setEnabled(true);
+
+				btn_id.setEnabled(false);
+
+				et.setEnabled(false);
+
+			}else{
+				Log.i("de 4 ", this.userid);
+			}
+
+			
+			
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+
+
 	}	
 
 	@Override
