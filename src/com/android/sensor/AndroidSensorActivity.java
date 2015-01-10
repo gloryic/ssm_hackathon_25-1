@@ -1,5 +1,14 @@
 package com.android.sensor;
 
+import java.net.MalformedURLException;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import io.socket.IOAcknowledge;
+import io.socket.IOCallback;
+import io.socket.SocketIO;
+import io.socket.SocketIOException;
 import android.app.Activity;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -7,9 +16,12 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.TextView;
 
-public class AndroidSensorActivity extends Activity implements SensorEventListener{
+public class AndroidSensorActivity extends Activity implements IOCallback, SensorEventListener, OnClickListener{
     /** Called when the activity is first created. */
 	
 	SensorManager sm;
@@ -36,12 +48,27 @@ public class AndroidSensorActivity extends Activity implements SensorEventListen
 	
 	TextView ori, acc, rot, lig, mag, pre, prox, temp;
 	TextView maxAcc;
+	
+    private Button btn_Connect;
+    SocketIO socket;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
+        
+		socket = new SocketIO();
+		try {
+			socket.connect("http://192.168.0.95:3000/", this);
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		btn_Connect = (Button)findViewById(R.id.btn_connect);
+		btn_Connect.setOnClickListener(this);
+		
         sm = (SensorManager)getSystemService(SENSOR_SERVICE); 
         
         oriSensor = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION); // 방향
@@ -66,10 +93,7 @@ public class AndroidSensorActivity extends Activity implements SensorEventListen
         maxAccX = -10;
         maxAccY = -10;
         maxAccZ = -10;
-        
-        
     }
-    
     
 	@Override
 	protected void onResume() {
@@ -110,7 +134,7 @@ public class AndroidSensorActivity extends Activity implements SensorEventListen
 			float var0 = event.values[0];
 			float var1 = event.values[1];
 			float var2 = event.values[2];
-	        Log.i("aa","a");
+	       // Log.i("aa","a");
 			switch (event.sensor.getType()) {
 			case Sensor.TYPE_ACCELEROMETER:
 				
@@ -169,6 +193,79 @@ public class AndroidSensorActivity extends Activity implements SensorEventListen
 			                          
 		}
 	}
-    
+
+
+	@Override
+	public void onClick(View v) {
+		// TODO Auto-generated method stub
+		int getId = v.getId();
+		
+		if(getId==R.id.btn_connect){
+			Log.i("socket", "start");
+			
+			try {
+				
+				// Sends a string to the server.
+				//socket.send("Hello Server");
+				// Sends a JSON object to the server.
+				//socket.send(new JSONObject().put("key", "value").put("key2","another value"));
+				// Emits an event to the server.
+				//socket.emit("event", "argument1", "argument2", 13.37);
+				
+				socket.emit("fromclient", new JSONObject().put("msg", "test"));
+				  
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	
+	@Override
+	public void onMessage(JSONObject json, IOAcknowledge ack) {
+		try {
+			System.out.println("Server said:" + json.toString(2));
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	//서버에서 emit하면 callback
+	public void on(String event, IOAcknowledge ack, Object... args) {
+		System.out.println("Server triggered event '" + event + "'");
+	}	
+
+	@Override
+	public void onMessage(String data, IOAcknowledge ack) {
+		System.out.println("Server said: " + data);
+	}
+
+	@Override
+	public void onError(SocketIOException socketIOException) {
+		System.out.println("an Error occured");
+		socketIOException.printStackTrace();
+		
+		try {
+			socket.connect("http://192.168.0.95:3000/", this);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void onDisconnect() {
+		
+		System.out.println("Connection terminated.");
+		
+		try {
+			socket.connect("http://192.168.0.95:3000/", this);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void onConnect() {
+		System.out.println("Connection established");
+	}
 }

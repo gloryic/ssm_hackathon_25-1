@@ -15,6 +15,7 @@ public final class R {
     }
     public static final class id {
         public static final int acc=0x7f050000;
+        public static final int btn_connect=0x7f050009;
         public static final int lig=0x7f050003;
         public static final int mag=0x7f050004;
         public static final int maxAcc=0x7f050008;
